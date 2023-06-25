@@ -1,13 +1,21 @@
 package com.aa.act.interview.org;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public abstract class Organization {
 
     private Position root;
+
+    // LHM isn't necessary but using it to maintain hierarchy
+    private final Map<String, Position> positions = new LinkedHashMap<>();
+
+    private int idx = 0;
     
     public Organization() {
         root = createOrganization();
+        updatePositions();  //updates positions map
     }
     
     protected abstract Position createOrganization();
@@ -21,7 +29,13 @@ public abstract class Organization {
      */
     public Optional<Position> hire(Name person, String title) {
         //your code here
-        return Optional.empty();
+        if (positions.containsKey(title)) {
+            final Position position = positions.get(title);
+            position.setEmployee(Optional.of(new Employee(++idx, person)));
+            return Optional.of(position);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -36,4 +50,29 @@ public abstract class Organization {
         }
         return sb.toString();
     }
+
+    /**
+     * updates map with all positions in the org
+     */
+    private void updatePositions() {
+        updateAllPositionsRecursive(root, positions);
+    }
+
+    /**
+     * starts at the root & adds position title to existing map
+     *
+     * @param position
+     * @param positions
+     */
+    private void updateAllPositionsRecursive(final Position position, final Map<String, Position> positions) {
+        if (position != null) {
+            positions.put(position.getTitle(), position);
+            if (position.getDirectReports() != null) {
+                for (final Position dp : position.getDirectReports()) {
+                    updateAllPositionsRecursive(dp, positions);    //recursively add all positions of direct reports
+                }
+            }
+        }
+    }
+
 }
